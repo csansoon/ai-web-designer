@@ -1,0 +1,40 @@
+.chat-container {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: 8px;
+
+	position: relative;
+	height: 100%;
+	width: 100%;
+
+	background-color: #1e1e1e;
+}
+
+.chat-messages {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: flex-start;
+	gap: 8px;
+
+	position: relative;
+	height: calc(100% - 50px);
+	width: 100%;
+
+	overflow-x: auto;
+	overflow-y: auto;
+}
+
+.chat-input {
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	justify-content: center;
+	gap: 8px;
+
+	position: relative;
+	height: 50px;
+	width: 100%;
+}

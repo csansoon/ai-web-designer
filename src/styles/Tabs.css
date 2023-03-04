@@ -1,0 +1,55 @@
+
+
+.tablist-container {
+	display: flex;
+	flex-direction: column;
+
+	position: relative;
+	width: 100%;
+	height: 100%;
+}
+
+.tablist-header {
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	justify-content: flex-start;
+	gap: 8px;
+
+	height: 50px;
+	width: 100%;
+}
+
+.tablist-tab {
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	justify-content: center;
+
+	height: 100%;
+	width: 100px;
+
+	cursor: pointer;
+}
+
+.tablist-tab:hover {
+	
+}
+
+.tablist-tab:active {
+	
+}
+
+.tablist-content {
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	justify-content: flex-start;
+	gap: 8px;
+
+	height: calc(100% - 50px);
+	width: 100%;
+
+	overflow-x: auto;
+	overflow-y: auto;
+}
