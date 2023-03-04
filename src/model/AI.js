@@ -48,8 +48,6 @@ class AI {
 			messages: parsedMessages,
 		});
 
-        console.log(response);
-
         let response_role = response.data.choices[0].message.role;
         let response_content = response.data.choices[0].message.content;
         let response_json = JSON.parse(response_content);
