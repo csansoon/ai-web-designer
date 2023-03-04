@@ -11,9 +11,9 @@ class ChatMessage {
 	}
 
 
-	render() {
+	render(key) {
 		return (
-			<div className="chat-message">
+			<div className={`chat-message ${this.role}`} key={key}>
 				<div className="chat-message-content">
 					{this.message}
 				</div>

@@ -1,3 +1,4 @@
+import './styles/colors.css';
 import './styles/App.css';
 import { useState } from 'react';
 
@@ -60,7 +61,7 @@ function App() {
 						</Tab>
 					</TabList>
 				</div>
-				<div style={{width: "30%"}}>
+				<div style={{width: "600px"}}>
 					<Chat messages={messages} addMessage={addMessage} loadingResponse={loadingResponse} />
 				</div>
 			</div>

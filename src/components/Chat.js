@@ -20,11 +20,11 @@ export default function Chat({ messages, addMessage }) {
 	return (
 		<div className="chat-container">
 			<div className="chat-messages">
-				{messages.map((message, index) => {
+				{messages.map((message, key) => {
 					return (
-						<div key={index}>
-							{message.render()}
-						</div>
+						<>
+							{message.render(key)}
+						</>
 					);
 				})}
 			</div>
