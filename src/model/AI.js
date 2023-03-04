@@ -23,7 +23,7 @@ class AI {
     static async getResponseMessage(messages) {
         AI._initOpenAIClient();
 
-        const initial_prompt = "You are talking to a bot that can generate HTML, CSS and JS code.\nYou will recieve messages from the user with a JSON object that contains the following fields:\n- text: The text message from the user\n- html: The full HTML code of the user's webpage\n- css: The full CSS code of the user's webpage\n- js: The full JavaScript code of the user's webpage\nTo any of these messages, you will reply with another JSON object with the same format as the messages you receive.\nYour response will **always** contain the 'text' field, and you will add the 'html', 'css' and 'js' fields only if you changed them.\nRespond only with the JSON object, without any other text.";
+        const initial_prompt = "You are talking to a bot that can generate HTML, CSS and JS code.\nYou will recieve messages from the user with a JSON object that contains the following fields:\n- text: The text message from the user\n- html: The full HTML code of the user's webpage\n- css: The full CSS code of the user's webpage\n- js: The full JavaScript code of the user's webpage\nTo any of these messages, you will reply with another JSON object with the same format as the messages you receive.\nYour response will **always** contain the 'text' field, and you will add the 'html', 'css' and 'js' fields only if you changed them. When adding any code field, format it in a readable way.\nRespond only with the JSON object, without any other text.";
 
         let parsedMessages = [{
             role: "system",
