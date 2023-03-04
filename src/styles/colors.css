@@ -1,0 +1,34 @@
+/* Define all color variables */
+
+body {
+	--color-background: #323741;
+	--color-background-secondary: #272a32;
+
+	--color-primary: #323741;
+	--color-secondary: #272a32;
+
+	--color-text: #fff;
+	--color-text-secondary: #a9a9a9;
+
+	--color-button: #1d5eff;
+	--color-button-hover: #306afd;
+
+	--color-tab: #3b414a;
+	--color-tab-hover: #272a32;
+	--color-tab-active: #2c437b;
+
+	--color-input: #272a32;
+	--color-input-focus: #1e2127;
+	--color-input-hover: #272b36;
+	--color-input-active: #222836;
+
+	--color-incoming-message-background: #fff;
+	--color-incoming-message-text: #323741;
+
+	--color-outgoing-message-background: #1d5eff;
+	--color-outgoing-message-text: #fff;
+
+	--color-system-message-background: #272a32;
+	--color-system-message-text: #fff;
+
+}

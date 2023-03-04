@@ -1,6 +1,8 @@
-import '../styles/Tabs.css'
-
+import '../styles/Tabs.css';
 import React, { useState } from 'react';
+
+import { SlIcon } from "@shoelace-style/shoelace/dist/react";
+import { SlBadge } from "@shoelace-style/shoelace/dist/react";
 
 export function TabList ({ children, html, css, js, loadingResponse }) {
 	const [activeTab, setActiveTab] = useState(children[0].key);
@@ -18,7 +20,8 @@ export function TabList ({ children, html, css, js, loadingResponse }) {
 						className={`tablist-tab ${activeTab === key ? "active" : ""}`}
 						onClick={() => handleChangeTab(key)}
 					>
-						{props.label}
+						<SlIcon name={props.icon} label={props.label} />
+						<span>{props.label}</span>
 					</div>
 				))}
 			</div>
