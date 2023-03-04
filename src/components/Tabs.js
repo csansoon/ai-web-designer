@@ -2,32 +2,33 @@ import '../styles/Tabs.css'
 
 import React, { useState } from 'react';
 
-export function TabList ({ children, html, css, js }) {
-	const [activeTab, setActiveTab] = useState(0);
-	const [tabs, setTabs] = useState(children.map(child => child.props.label));
+export function TabList ({ children, html, css, js, loadingResponse }) {
+	const [activeTab, setActiveTab] = useState(children[0].key);
 
-	const handleClick = (index) => {
-		setActiveTab(index);
+	const handleChangeTab = (key) => {
+		setActiveTab(key);
 	}
 
 	return (
 		<div className="tablist-container">
 			<div className="tablist-header">
-				{tabs.map((tab, index) => (
+				{children.map(({ key, props }) => (
 					<div
-						key={index}
-						className={index === activeTab ? "tablist-tab active" : "tablist-tab"}
-						onClick={() => handleClick(index)}
+						key={key}
+						className={`tablist-tab ${activeTab === key ? "active" : ""}`}
+						onClick={() => handleChangeTab(key)}
 					>
-						{tab}
+						{props.label}
 					</div>
 				))}
 			</div>
-			<div className="tablist-content">
-				{React.Children.map(children, (child, index) => (
-					index === activeTab && React.cloneElement(child, { html, css, js })
-				))}
-			</div>
+			{children.map(({ key, props }) => (
+				<div key={key} className={`tablist-content ${activeTab === key ? "active" : ""}`}>
+					<div className="tablist-content-inner">
+						{React.cloneElement(props.children, { html, css, js, loadingResponse })}
+					</div>
+				</div>
+			))}
 		</div>
 	);
 }
