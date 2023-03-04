@@ -16,23 +16,36 @@ function App() {
 	const [js, setJs] = useState("console.log('Hello world!');");
 	const [messages, setMessages] = useState([]);
 
+	const [loadingResponse, setLoadingResponse] = useState(false);
+
 	function addMessage(message_text) {
-		const newMessage = new ChatMessage("user", message_text, html, css, js);
-		setMessages([...messages, newMessage]);
+		if (loadingResponse) {
+			console.error("Can't send message while waiting for response");
+			return;
+		}
+		setLoadingResponse(true);
 
-		let responseMessage = AI.getResponseMessage(messages);
-		setMessages([...messages, responseMessage]);
+		const newMessages = [
+			...messages,
+			new ChatMessage("user", message_text, html, css, js)
+		]
+		setMessages(newMessages);
 
-		if (responseMessage.html) setHtml(responseMessage.html);
-		if (responseMessage.css) setCss(responseMessage.css);
-		if (responseMessage.js) setJs(responseMessage.js);
+		AI.getResponseMessage(newMessages).then(responseMessage => {
+			setMessages([...newMessages, responseMessage]);
+			setLoadingResponse(false);
+
+			if (responseMessage.html) setHtml(responseMessage.html);
+			if (responseMessage.css) setCss(responseMessage.css);
+			if (responseMessage.js) setJs(responseMessage.js);
+		});
 	}
 
 	return (
 		<div className="App">
 			<div className="container">
 				<div>
-					<TabList html={html} css={css} js={js}>
+					<TabList html={html} css={css} js={js} loadingResponse={loadingResponse}>
 						<Tab label="Página" key="page">
 							<VirtualPage html={html} css={css} js={js} />
 						</Tab>
@@ -48,7 +61,7 @@ function App() {
 					</TabList>
 				</div>
 				<div style={{width: "30%"}}>
-					<Chat messages={messages} addMessage={addMessage} />
+					<Chat messages={messages} addMessage={addMessage} loadingResponse={loadingResponse} />
 				</div>
 			</div>
 		</div>
