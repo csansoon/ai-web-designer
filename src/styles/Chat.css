@@ -54,13 +54,11 @@
 	background-color: var(--color-incoming-message-background);
 	color: var(--color-text);
 	border-radius: 8px;
-
-	user-select: none;
 }
 
 .chat-message.user {
-	background-color: var(--color-outgoing-message-background);
-	color: var(--color-outgoing-message-text);
+	background-color: #0284c7;
+	color: #fff;
 
 	border-top-left-radius: 0;
 	align-self: flex-start;
@@ -68,16 +66,18 @@
 
 .chat-message.assistant {
 	background-color: #323741;
-	color: white;
+	color: #fff;
 
 	border-top-right-radius: 0;
 	align-self: flex-end;
 }
 
 .chat-message.system {
-	background-color: var(--color-system-message-background);
-	color: var(--color-system-message-text);
+	background-color: #343e53;
+	color: #fff;
 
+	max-width: 80%;
+	font-size: 14px;
 	align-self: center;
 }
 
