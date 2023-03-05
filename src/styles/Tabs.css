@@ -82,3 +82,38 @@
 
 	background-color: #fff;
 }
+
+.tablist-content-inner .loading-screen {
+	position: absolute;
+	top: 0;
+	left: 0;
+	height: 100%;
+	width: 100%;
+
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+
+	z-index: 10;
+	background-color: rgba(255, 255, 255, 0.5);
+	animation: background-loading 2s infinite;
+	cursor: progress;
+}
+
+.tablist-content-inner .loading-screen sl-spinner {
+	font-size: 32px;
+}
+
+@keyframes background-loading {
+	0% {
+		background-color: rgba(255, 255, 255, 0.5);
+	}
+	50% {
+		background-color: rgba(255, 255, 255, 0.8);
+	}
+	100% {
+		background-color: rgba(255, 255, 255, 0.5);
+	}
+}
+

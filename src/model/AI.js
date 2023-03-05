@@ -5,6 +5,7 @@ import { Configuration, OpenAIApi } from 'openai';
 class AI {
     static _config = null;
     static _OpenAIClient = null;
+    static _totalUsedTokens = 0;
 
     static _initOpenAIClient() {
         if (AI._config) return;
@@ -18,93 +19,154 @@ class AI {
 		});
         
         AI._OpenAIClient = new OpenAIApi(AI._config);
+
+        AI._totalUsedTokens = 0;
+    }
+
+    static get totalUsedTokens() {
+        return AI._totalUsedTokens;
+    }
+
+    static get totalUsedTokensUSD() {
+        return (AI._totalUsedTokens * 0.002) / 1000;
     }
 
     static async getResponseMessage(messages) {
-        try {
-            AI._initOpenAIClient();
+        AI._initOpenAIClient();
 
-            const prompt_and_examples = [
-                {
-                    role: "system",
-                    content: "You are talking to a bot that can generate HTML, CSS and JS code.\nYou will recieve messages from the user with a JSON object that contains the following fields:\n- text: The text message from the user\n- html: The full HTML code of the user's webpage\n- css: The full CSS code of the user's webpage\n- js: The full JavaScript code of the user's webpage\nTo any of these messages, you will reply with another JSON object with the same format as the messages you receive.\nYour response will **always** contain the 'text' field, and you will add the 'html', 'css' and 'js' fields only if you changed them. When adding any code field, format it in a readable way.\nRespond only with the JSON object, without any other text.\nRespond as a plain text, **do not** add a code block."
-                },
-                {
-                    role: "user",
-                    content: JSON.stringify({
-                        text: "Hello!",
-                        html: "",
-                        css: "",
-                        js: ""
-                    })
-                },
-                {
-                    role: "assistant",
-                    content: JSON.stringify({
-                        text: "Hi, how can I help you?"
-                    })
-                },
-                {
-                    role: "user",
-                    content: JSON.stringify({
-                        text: "Please add a title that says \"Hello world!\"",
-                        html: "",
-                        css: "",
-                        js: ""
-                    })
-                },
-                {
-                    role: "assistant",
-                    content: JSON.stringify({
-                        text: "Sure, I added the title",
-                        html: "<h1>Hello world!</h1>",
-                    })
-                },
-            ];
+        const guidelines = [
+            "You are a bot that can generate HTML, CSS and JS code.",
+            "You will recieve messages from the user containing a JSON object. This object will contain the following fields:",
+            "- text: The text message from the user",
+            "- html: The full HTML code of the user's webpage",
+            "- css: The full CSS code of the user's webpage",
+            "- js: The full JavaScript code of the user's webpage",
+            "You will reply to the user with another JSON object **and nothing more**.",
+            "You will add the 'html', 'css' and 'js' fields only if you changed them. When adding any code field, format it in a readable way.",
+            "Your response will **always** contain the 'text' field, which will be the response you send to the user.",
+            "Your response will **never** contain just a text message, it will always contain a JSON object.",
+            "If the latest message is from the assistant with an incomplete JSON object, you will **only** reply with the rest of the JSON object and nothing more.",
+        ];
 
-            let parsedMessages = [...prompt_and_examples];
+        const prompt_and_examples = [
+            {
+                role: "system",
+                content: guidelines.join("\n")
+            },
+            {
+                role: "user",
+                content: JSON.stringify({
+                    text: "Hello!"
+                })
+            },
+            {
+                role: "assistant",
+                content: JSON.stringify({
+                    text: "Hi, how can I help you?"
+                })
+            },
+            {
+                role: "user",
+                content: JSON.stringify({
+                    text: "Please add a title that says \"Hello world!\"",
+                })
+            },
+            {
+                role: "assistant",
+                content: JSON.stringify({
+                    html: "<h1>Hello world!</h1>",
+                    text: "Sure, I added the title for you. Do you want to add anything else?",
+                })
+            },
+            {
+                role: "user",
+                content: JSON.stringify({
+                    text: "Now make the title red and bold",
+                })
+            },
+            {
+                role: "assistant",
+                content: JSON.stringify({
+                    css: "h1 {\n\tcolor: red;\n\tfont-weight: bold;\n}",
+                    text: "Done! Now the title is red and bold.",
+                })
+            }
+        ];
 
-            for (let message of messages) {
-                if (message.role === "system") continue;
 
-                let message_json = {};
-                if (message.message) message_json.text = message.message;
-                if (message.html) message_json.html = message.html;
-                if (message.css) message_json.css = message.css;
-                if (message.js) message_json.js = message.js;
+        let sent_messages = [];
+        for (let message of messages) {
 
-                parsedMessages.push({
-                    role: message.role,
-                    content: JSON.stringify(message_json)
-                });
+            let message_json = {};
+            if (message.message) message_json.text = message.message;
+            if (message.html) message_json.html = message.html;
+            if (message.css) message_json.css = message.css;
+            if (message.js) message_json.js = message.js;
+
+            if (message.role === "system") continue;
+
+            if (message.role === "user") {
+                message_json = {
+                    text: message.message,
+                }
             }
 
-            let response = await AI._OpenAIClient.createChatCompletion({
+            if (message.role === "assistant") {
+            }
+
+            sent_messages.push({
+                role: message.role,
+                content: JSON.stringify(message_json)
+            });
+        }
+
+        let response = null;
+        try {
+            response = await AI._OpenAIClient.createChatCompletion({
                 model: "gpt-3.5-turbo",
-                messages: parsedMessages,
+                messages: [...prompt_and_examples, ...sent_messages],
             });
 
-            let response_role = response.data.choices[0].message.role;
-            let response_content = response.data.choices[0].message.content;
+            AI._totalUsedTokens += response.data.usage.total_tokens;
 
-            let response_json = JSON.parse(response_content);
+            if (response.data.choices[0].finish_reason !== "length") {
+                return new ChatMessage("system", "The response message is incomplete due to the API's limitations. Please try again later.");
+            }
 
-            const newMessage = new ChatMessage(
-                response_role,
-                response_json.text,
-                response_json.html,
-                response_json.css,
-                response_json.js
-            );
-
-            console.log("returning new message", newMessage);
-            return newMessage;
-
+            sent_messages.push({
+                role: "assistant",
+                content: response.data.choices[0].message.content,
+            });
 
         } catch (error) {
             console.error(error);
-            return new ChatMessage("system", "Error:\n" + error.message);
+
+            if (error.response.status === 400) {
+                return new ChatMessage("system", "The response message is incomplete due to the API's limitations. Please try again later.");
+            }
+
+            else {
+                return new ChatMessage("system", "The API returned an error. Please try again later.");
+            }
         }
+
+        let response_json = {};
+        try {
+            response_json = JSON.parse(response.data.choices[0].message.content);
+        } catch (error) {
+            console.error(error);
+            return new ChatMessage("system", "The API returned an invalid response. Please try again later.");
+        }
+
+        const newMessage = new ChatMessage(
+            "assistant",
+            response_json.text,
+            response_json.html,
+            response_json.css,
+            response_json.js
+        );
+
+        return newMessage;
     }
 }
 

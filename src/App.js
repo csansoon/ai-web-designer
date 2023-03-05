@@ -19,6 +19,9 @@ function App() {
 
 	const [loadingResponse, setLoadingResponse] = useState(false);
 
+	const [usedTokens, setUsedTokens] = useState("0");
+	const [moneySpent, setMoneySpent] = useState("0.00");
+
 	function addMessage(message_text) {
 		if (loadingResponse) {
 			console.error("Can't send message while waiting for response");
@@ -35,6 +38,14 @@ function App() {
 		AI.getResponseMessage(newMessages).then(responseMessage => {
 			setMessages([...newMessages, responseMessage]);
 			setLoadingResponse(false);
+
+			let _used_tokens = AI.totalUsedTokens;
+			let _money_spent = AI.totalUsedTokensUSD.toFixed(4);
+			if (AI.totalUsedTokens > 1000) _used_tokens = Math.round(AI.totalUsedTokens / 1000) + "k";
+			if (AI.totalUsedTokens > 1000000) _used_tokens = Math.round(AI.totalUsedTokens / 1000000) + "M";
+			setUsedTokens(_used_tokens);
+			setMoneySpent(_money_spent);
+			
 
 			if (responseMessage.html) setHtml(responseMessage.html);
 			if (responseMessage.css) setCss(responseMessage.css);
@@ -62,7 +73,7 @@ function App() {
 					</TabList>
 				</div>
 				<div style={{width: "600px"}}>
-					<Chat messages={messages} addMessage={addMessage} loadingResponse={loadingResponse} />
+					<Chat messages={messages} addMessage={addMessage} loadingResponse={loadingResponse} usedTokens={usedTokens} moneySpent={moneySpent} />
 				</div>
 			</div>
 		</div>

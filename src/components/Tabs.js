@@ -1,8 +1,7 @@
 import '../styles/Tabs.css';
 import React, { useState } from 'react';
 
-import { SlIcon } from "@shoelace-style/shoelace/dist/react";
-import { SlBadge } from "@shoelace-style/shoelace/dist/react";
+import { SlIcon, SlBadge, SlSpinner } from "@shoelace-style/shoelace/dist/react";
 
 export function TabList ({ children, html, css, js, loadingResponse }) {
 	const [activeTab, setActiveTab] = useState(children[0].key);
@@ -10,6 +9,15 @@ export function TabList ({ children, html, css, js, loadingResponse }) {
 	const handleChangeTab = (key) => {
 		setActiveTab(key);
 	}
+
+	const loading_screen = (
+		loadingResponse ? (
+			<div className="loading-screen">
+				<SlSpinner />
+			</div>
+		) : null
+	);
+
 
 	return (
 		<div className="tablist-container">
@@ -28,6 +36,7 @@ export function TabList ({ children, html, css, js, loadingResponse }) {
 			{children.map(({ key, props }) => (
 				<div key={key} className={`tablist-content ${activeTab === key ? "active" : ""}`}>
 					<div className="tablist-content-inner">
+						{loading_screen}
 						{React.cloneElement(props.children, { html, css, js, loadingResponse })}
 					</div>
 				</div>
