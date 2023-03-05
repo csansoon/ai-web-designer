@@ -58,16 +58,16 @@ function App() {
 			<div className="container">
 				<div>
 					<TabList html={html} css={css} js={js} loadingResponse={loadingResponse}>
-						<Tab key="page" label="Vista previa" icon="card-image" >
+						<Tab key="page" label="Preview" icon="card-image" >
 							<VirtualPage html={html} css={css} js={js} />
 						</Tab>
-						<Tab key="html" label="Elementos" icon="code-slash">
+						<Tab key="html" label="Elements" icon="code-slash">
 							<Editor language="html" displayName="HTML" value={html} onChange={setHtml} />
 						</Tab>
-						<Tab key="css" label="Estilos" icon="palette">
+						<Tab key="css" label="Styles" icon="palette">
 							<Editor language="css" displayName="CSS" value={css} onChange={setCss} />
 						</Tab>
-						<Tab key="js" label="Código" icon="braces">
+						<Tab key="js" label="Code" icon="braces">
 							<Editor language="javascript" displayName="JS" value={js} onChange={setJs} />
 						</Tab>
 					</TabList>

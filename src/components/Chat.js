@@ -23,12 +23,12 @@ export default function Chat({ messages, addMessage, loadingResponse, usedTokens
 		<div className="chat-container">
 			<div className="chat-container-inner">
 				<div className="chat-header">
-					<SlTooltip content="Cada token representa una palabra, conjunto de letras o concepto que el chatbot puede entender.">
+					<SlTooltip content="Each token represents a word, a group of characters or a concept that the AI can understand.">
 						<SlBadge>
 							{usedTokens} tokens
 						</SlBadge>
 					</SlTooltip>
-					<SlTooltip content="1k tokens cuestan $0.002 USD.">
+					<SlTooltip content="1k tokens cost $0.002 USD.">
 						<SlBadge>
 							$ {moneySpent}
 						</SlBadge>
@@ -45,10 +45,10 @@ export default function Chat({ messages, addMessage, loadingResponse, usedTokens
 						onKeyPress={onClick}
 						disabled={loadingResponse}
 					/>
-					<SlTooltip content="Enviar">
+					<SlTooltip content="Send">
 						<SlButton
 							onClick={sendMessage}
-							aria-label="Enviar"
+							aria-label="Send"
 							variant="primary"
 							loading={loadingResponse}
 							circle

@@ -21,7 +21,7 @@ export default function VirtualPage({ html, css, js }) {
 				<style>${css}</style>
 			</head>
 			<body>
-				${isHtmlValid(html) ? html : "<h1>HTML inválido</h1>"}
+				${isHtmlValid(html) ? html : "<h1>Invalid HTML</h1>"}
 				<script>${js}</script>
 			</body>
 		</html>
