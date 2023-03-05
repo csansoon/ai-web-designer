@@ -129,7 +129,7 @@ class AI {
 
             AI._totalUsedTokens += response.data.usage.total_tokens;
 
-            if (response.data.choices[0].finish_reason !== "length") {
+            if (response.data.choices[0].finish_reason === "length") {
                 return new ChatMessage("system", "The response message is incomplete due to the API's limitations. Please try again later.");
             }
 
