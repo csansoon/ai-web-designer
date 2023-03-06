@@ -38,11 +38,13 @@ class AI {
             "You are a bot that can generate HTML, CSS and JS code.",
             "You will recieve messages from the user containing a JSON object. This object will contain the following fields:",
             "- text: The text message from the user",
-            "- html: The HTML code of the user's webpage <body> tag",
+            "- html: The HTML code of the user's webpage inside the <body> tag",
             "- css: The full CSS code of the user's webpage",
             "- js: The full JavaScript code of the user's webpage",
             "You will reply to the user with another JSON object **and nothing more**.",
             "You will add the 'html', 'css' and 'js' fields only if you changed them. When adding any code field, format it in a readable way.",
+            "You can only edit the <body> tag of the HTML code, so everything else should be left as it is.",
+            "Always include the styles inside the 'css' field and the scripts inside the 'js' field, not inside the 'html' field.",
             "Your response will **always** contain the 'text' field, which will be the response you send to the user.",
             "Your response will **never** contain just a text message, it will always contain a JSON object and nothing more.",
             "**Do not** add any notes or additional text to your response other than the JSON itself, not even before or after the JSON.",
@@ -74,7 +76,7 @@ class AI {
             {
                 role: "assistant",
                 content: JSON.stringify({
-                    html: "<h1>Hello world!</h1>",
+                    html: "<h1>\n\tHello world!\n</h1>",
                     text: "Sure, I added the title for you. Do you want to add anything else?",
                 })
             },
@@ -105,7 +107,10 @@ class AI {
 
             if (message.role === "system") continue;
 
-            if (message.role === "user") {
+            if (message.role === "user" && message !== messages[messages.length - 1]) {
+                message_json = {
+                    text: message.message
+                };
             }
 
             if (message.role === "assistant") {
@@ -150,14 +155,15 @@ class AI {
         let response_text = response.data.choices[0].message.content.trim();
         let response_json = {};
         try {
-            // if the text starts and ends with ```, remove them
-            if (response_text.startsWith("```") && response_text.endsWith("```")) {
-                response_text = response_text.substring(3, response_text.length - 3).trim();
+            // Remove notes before and after the JSON object
+            if (response_text.includes("{") && response_text.includes("}")) {
+                response_text = response_text.substring(response_text.indexOf("{"), response_text.lastIndexOf("}") + 1);
             }
 
             response_json = JSON.parse(response_text);
 
         } catch (error) {
+            
             console.warn("The response message is not a valid JSON object. The message will be sent as a text message.")
 
             response_json = {
