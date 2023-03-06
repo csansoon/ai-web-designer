@@ -38,14 +38,14 @@ class AI {
             "You are a bot that can generate HTML, CSS and JS code.",
             "You will recieve messages from the user containing a JSON object. This object will contain the following fields:",
             "- text: The text message from the user",
-            "- html: The full HTML code of the user's webpage",
+            "- html: The HTML code of the user's webpage <body> tag",
             "- css: The full CSS code of the user's webpage",
             "- js: The full JavaScript code of the user's webpage",
             "You will reply to the user with another JSON object **and nothing more**.",
             "You will add the 'html', 'css' and 'js' fields only if you changed them. When adding any code field, format it in a readable way.",
             "Your response will **always** contain the 'text' field, which will be the response you send to the user.",
-            "Your response will **never** contain just a text message, it will always contain a JSON object.",
-            "If the latest message is from the assistant with an incomplete JSON object, you will **only** reply with the rest of the JSON object and nothing more.",
+            "Your response will **never** contain just a text message, it will always contain a JSON object and nothing more.",
+            "**Do not** add any Notes or additional text to your response other than the JSON itself.",
         ];
 
         const prompt_and_examples = [
@@ -106,9 +106,6 @@ class AI {
             if (message.role === "system") continue;
 
             if (message.role === "user") {
-                message_json = {
-                    text: message.message,
-                }
             }
 
             if (message.role === "assistant") {
@@ -150,12 +147,22 @@ class AI {
             }
         }
 
+        let response_text = response.data.choices[0].message.content.trim();
         let response_json = {};
         try {
-            response_json = JSON.parse(response.data.choices[0].message.content);
+            // if the text starts and ends with ```, remove them
+            if (response_text.startsWith("```") && response_text.endsWith("```")) {
+                response_text = response_text.substring(3, response_text.length - 3).trim();
+            }
+
+            response_json = JSON.parse(response_text);
+
         } catch (error) {
-            console.error(error);
-            return new ChatMessage("system", "The API returned an invalid response. Please try again later.");
+            console.warn("The response message is not a valid JSON object. The message will be sent as a text message.")
+
+            response_json = {
+                text: response_text,
+			};
         }
 
         const newMessage = new ChatMessage(
