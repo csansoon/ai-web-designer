@@ -104,6 +104,12 @@
 	align-self: center;
 }
 
+.chat-message-content {
+	max-width: 100%;
+	overflow: hidden;
+	overflow-wrap: break-word;
+}
+
 .chat-input {
 	display: flex;
 	flex-direction: row;
