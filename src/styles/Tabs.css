@@ -14,12 +14,12 @@
 .tablist-header {
 	display: flex;
 	flex-direction: row;
+	flex-wrap: wrap;
 	align-items: center;
 	justify-content: flex-start;
 	gap: 12px;
 	padding: 8px 16px;
 
-	height: 64px;
 	width: 100%;
 }
 
@@ -29,7 +29,7 @@
 	align-items: center;
 	justify-content: center;
 
-	height: 100%;
+	height: 48px;
 	width: auto;
 	padding: 8px 16px;
 	gap: 16px;
