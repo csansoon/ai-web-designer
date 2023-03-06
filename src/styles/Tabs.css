@@ -50,6 +50,14 @@
 	background-color: var(--color-tab-hover);
 }
 
+.tablist-tab:active {
+	background-color: var(--color-tab-active);
+}
+
+.tablist-tab.right {
+	margin-left: auto;
+}
+
 .tablist-content {
 	display: flex;
 	flex-direction: column;

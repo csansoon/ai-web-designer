@@ -53,11 +53,35 @@ function App() {
 		});
 	}
 
+	function downloadHtmlFile() {
+
+		const html_file = `
+			<html>
+				<head>
+					<style>${css}</style>
+				</head>
+				<body>
+					${html}
+					<script>${js}</script>
+				</body>
+			</html>
+		`;
+
+		const element = document.createElement("a");
+		const file = new Blob([html_file], { type: 'text/html' });
+		element.href = URL.createObjectURL(file);
+		element.download = "index.html";
+		document.body.appendChild(element); // Required for this to work in FireFox
+		element.click();
+		document.body.removeChild(element);
+
+	}
+
 	return (
 		<div className="App">
 			<div className="container">
 				<div>
-					<TabList html={html} css={css} js={js} loadingResponse={loadingResponse}>
+					<TabList html={html} css={css} js={js} loadingResponse={loadingResponse} downloadFunction={ downloadHtmlFile }>
 						<Tab key="page" label="Preview" icon="card-image" >
 							<VirtualPage html={html} css={css} js={js} />
 						</Tab>

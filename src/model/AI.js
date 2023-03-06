@@ -45,7 +45,7 @@ class AI {
             "You will add the 'html', 'css' and 'js' fields only if you changed them. When adding any code field, format it in a readable way.",
             "Your response will **always** contain the 'text' field, which will be the response you send to the user.",
             "Your response will **never** contain just a text message, it will always contain a JSON object and nothing more.",
-            "**Do not** add any Notes or additional text to your response other than the JSON itself.",
+            "**Do not** add any notes or additional text to your response other than the JSON itself, not even before or after the JSON.",
         ];
 
         const prompt_and_examples = [

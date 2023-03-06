@@ -1,9 +1,9 @@
 import '../styles/Tabs.css';
 import React, { useState } from 'react';
 
-import { SlIcon, SlBadge, SlSpinner } from "@shoelace-style/shoelace/dist/react";
+import { SlIcon, SlTooltip, SlSpinner } from "@shoelace-style/shoelace/dist/react";
 
-export function TabList ({ children, html, css, js, loadingResponse }) {
+export function TabList ({ children, html, css, js, loadingResponse, downloadFunction }) {
 	const [activeTab, setActiveTab] = useState(children[0].key);
 
 	const handleChangeTab = (key) => {
@@ -32,6 +32,13 @@ export function TabList ({ children, html, css, js, loadingResponse }) {
 						<span>{props.label}</span>
 					</div>
 				))}
+
+				<SlTooltip content="Download the current page">
+					<div className="tablist-tab right" onClick={downloadFunction}>
+						<SlIcon name="download" label="Download" />
+						<span>Download</span>
+					</div>
+				</SlTooltip>
 			</div>
 			{children.map(({ key, props }) => (
 				<div key={key} className={`tablist-content ${activeTab === key ? "active" : ""}`}>
