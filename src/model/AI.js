@@ -7,20 +7,30 @@ class AI {
     static _OpenAIClient = null;
     static _totalUsedTokens = 0;
 
-    static _initOpenAIClient() {
-        if (AI._config) return;
-
-        if (!process.env.REACT_APP_OPENAI_API_KEY) {
-            throw new Error("OpenAI API key not set");
-        }
-
+    static initWithKey(key) {
         AI._config = new Configuration({
-			apiKey: process.env.REACT_APP_OPENAI_API_KEY,
-		});
-        
+            apiKey: key,
+        });
         AI._OpenAIClient = new OpenAIApi(AI._config);
-
         AI._totalUsedTokens = 0;
+    }
+
+    static get isInitialized() {
+        return AI._config && AI._OpenAIClient;
+    }
+
+    static async checkAPIKey(key) {
+        const config = new Configuration({
+            apiKey: key,
+        });
+        try {
+            const OpenAIClient = new OpenAIApi(config);
+            await OpenAIClient.listModels();
+            return true;
+        }
+        catch (e) {
+            return false;
+        }
     }
 
     static get totalUsedTokens() {
@@ -32,7 +42,10 @@ class AI {
     }
 
     static async getResponseMessage(messages) {
-        AI._initOpenAIClient();
+        if (!AI._config || !AI._OpenAIClient) {
+            console.error("AI not initialized");
+            return new ChatMessage("system", "The API key is not valid.");
+        }
 
         const guidelines = [
             "You are a bot that can generate HTML, CSS and JS code.",
