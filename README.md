@@ -19,4 +19,4 @@ To use AI Web Designer, follow the steps below:
 3. Run `npm start` to start the development server.
 4. Access `http://localhost:3000` in your web browser.
 
-Once you have the tool up and running, you can start building your web page by askin the AI using the sidebar's chat. You can then customize the HTML, CSS, and JS code using the integrated code editor.
+Once you have the tool up and running, you can start building your web page by asking the AI using the sidebar's chat. You can then customize the HTML, CSS, and JS code using the integrated code editor.
