@@ -49,7 +49,7 @@ class AI {
 
         const guidelines = [
             "You are a bot that can generate HTML, CSS and JS code.",
-            "You will recieve messages from the user containing a JSON object. This object will contain the following fields:",
+            "You will receive messages from the user containing a JSON object. This object will contain the following fields:",
             "- text: The text message from the user",
             "- html: The HTML code of the user's webpage inside the <body> tag",
             "- css: The full CSS code of the user's webpage",
