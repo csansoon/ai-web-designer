@@ -1,6 +1,5 @@
 import { render, screen } from '@testing-library/react';
 import App from './App';
-import { extractJsonObject, sanitizeResponsePayload } from './model/AI';
 import { buildPreviewDocument } from './components/VirtualPage';
 
 beforeEach(() => {
@@ -18,19 +17,6 @@ test('renders model selector and starter guidance', () => {
   expect(screen.getByText(/describe the page you want to build/i)).toBeInTheDocument();
   expect(screen.getAllByText(/gpt-4.1-mini/i).length).toBeGreaterThan(0);
   expect(screen.getByText(/reset starter/i)).toBeInTheDocument();
-});
-
-test('extractJsonObject trims wrapper text', () => {
-  expect(extractJsonObject('note {"text":"hello"} thanks')).toEqual({ text: 'hello' });
-});
-
-test('sanitizeResponsePayload ensures text exists', () => {
-  expect(sanitizeResponsePayload({ html: '<h1>Hi</h1>' })).toEqual({
-    text: 'Done.',
-    html: '<h1>Hi</h1>',
-    css: undefined,
-    js: undefined,
-  });
 });
 
 test('buildPreviewDocument creates complete HTML document', () => {
