@@ -1,22 +1,57 @@
 # AI Web Designer
-AI Web Designer is a web building tool powered by OpenAI's GPT API. It allows you to create and design static web pages with ease. The tool is programmed using ReactJS and is designed to help individuals and teams build web pages faster.
 
-You can now try it live at https://csansoon.github.io/ai-web-designer/!
+AI Web Designer is a React app for iteratively building static web pages with OpenAI. It combines a live preview, editable HTML/CSS/JS panes, and a chat workflow that can rewrite the page based on natural-language instructions.
 
-## Features
-- Real-time preview of HTML, CSS, and JS code
-- AI-powered auto-complete for faster coding
-- Token and price tracker
+Live demo: https://csansoon.github.io/ai-web-designer/
+
+## What's improved in this version
+
+- Upgraded the AI integration from the legacy OpenAI SDK flow to a modern structured-output chat integration.
+- Replaced the hardcoded `gpt-3.5-turbo` setup with selectable current models (`gpt-4.1-mini` and `gpt-4.1`).
+- Added stronger prompting and strict JSON schema responses so code updates are more reliable.
+- Improved error handling for invalid keys, rate limits, networking failures, and context-length issues.
+- Added a better starter template, model picker, API key management UX, and more useful session usage tracking.
+- Replaced the broken starter test with app- and utility-level coverage.
+
+## How it works
+
+The assistant receives the latest user request together with the current HTML, CSS, and JavaScript state of the page. It returns structured JSON containing:
+
+- `text`: the assistant reply shown in chat
+- `html`: optional replacement body markup
+- `css`: optional replacement stylesheet
+- `js`: optional replacement JavaScript
+
+Only the changed parts need to be returned, which keeps iteration fast and makes the app feel more like an AI design copilot than a single-shot generator.
+
+## Local development
+
+```bash
+npm install
+npm start
+```
+
+Then open `http://localhost:3000`.
+
+## Testing
+
+```bash
+npm test
+npm run build
+```
+
+## API key model
+
+This app currently sends requests directly from the browser to OpenAI using a user-provided API key stored in local storage. For safety:
+
+- prefer a project-scoped key
+- set a spend limit
+- do not use a high-privilege personal production key
+
+A future backend proxy could further improve security and observability, but this repo intentionally keeps the product as a static client app.
 
 ## Limitations
-Due to the limitations of OpenAI's API, AI Web Designer cannot handle large documents with too much content. The API has a maximum token limit of 4,000 per request, which means that the AI cannot generate large sections of code, or respond to the user when the document is too big.
 
-## How to Use
-To use AI Web Designer, follow the steps below:
-
-1. Clone the project from the GitHub repository.
-2. Run `npm install` to install the dependencies.
-3. Run `npm start` to start the development server.
-4. Access `http://localhost:3000` in your web browser.
-
-Once you have the tool up and running, you can start building your web page by asking the AI using the sidebar's chat. You can then customize the HTML, CSS, and JS code using the integrated code editor.
+- The app is optimized for a single static page rather than full multi-page apps.
+- Very large HTML/CSS/JS payloads can still hit model context limits.
+- Browser-side API usage is convenient for demos, but a server-side proxy is safer for production deployments.
