@@ -15,7 +15,7 @@ test('renders model selector and starter guidance', () => {
   render(<App />);
 
   expect(screen.getByText(/describe the page you want to build/i)).toBeInTheDocument();
-  expect(screen.getAllByText(/gpt-4.1-mini/i).length).toBeGreaterThan(0);
+  expect(screen.getAllByText(/gpt-5-mini/i).length).toBeGreaterThan(0);
   expect(screen.getByText(/reset starter/i)).toBeInTheDocument();
 });
 

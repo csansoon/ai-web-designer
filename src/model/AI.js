@@ -6,21 +6,54 @@ const STORAGE_KEYS = {
   selectedModel: 'selected_model',
 };
 
-const MODELS = {
-  'gpt-4.1-mini': {
-    label: 'gpt-4.1-mini',
-    inputCostPerMillion: 0.4,
-    outputCostPerMillion: 1.6,
-    description: 'Fast default for iterative web design edits.',
+const MODEL_METADATA = {
+  'gpt-5.4': {
+    label: 'gpt-5.4',
+    inputCostPerMillion: 1.25,
+    outputCostPerMillion: 10,
+    description: 'Preferred flagship model when the key has access to the latest GPT-5 tier.',
+  },
+  'gpt-5.3-codex': {
+    label: 'gpt-5.3-codex',
+    inputCostPerMillion: 1.25,
+    outputCostPerMillion: 10,
+    description: 'Code-leaning GPT-5 option for explicit HTML, CSS, and JavaScript edits.',
+  },
+  'gpt-5-mini': {
+    label: 'gpt-5-mini',
+    inputCostPerMillion: 0.25,
+    outputCostPerMillion: 2,
+    description: 'Balanced lower-cost GPT-5 choice for faster drafting and iteration.',
+  },
+  'gpt-5': {
+    label: 'gpt-5',
+    inputCostPerMillion: 1.25,
+    outputCostPerMillion: 10,
+    description: 'Generic GPT-5 fallback kept for compatibility when a key exposes it explicitly.',
   },
   'gpt-4.1': {
     label: 'gpt-4.1',
     inputCostPerMillion: 2,
     outputCostPerMillion: 8,
-    description: 'Higher quality for larger or trickier page rewrites.',
+    description: 'Reliable higher-quality fallback for larger or trickier page rewrites.',
+  },
+  'gpt-4.1-mini': {
+    label: 'gpt-4.1-mini',
+    inputCostPerMillion: 0.4,
+    outputCostPerMillion: 1.6,
+    description: 'Fast default fallback for iterative web design edits.',
+  },
+  'gpt-4.1-nano': {
+    label: 'gpt-4.1-nano',
+    inputCostPerMillion: 0.1,
+    outputCostPerMillion: 0.4,
+    description: 'Lowest-cost fallback for lightweight edits and experiments.',
   },
 };
 
+const PREFERRED_MODEL_ORDER = ['gpt-5.4', 'gpt-5.3-codex', 'gpt-5-mini', 'gpt-4.1', 'gpt-4.1-mini', 'gpt-4.1-nano'];
+const COMPATIBILITY_MODEL_ORDER = ['gpt-5'];
+const DEFAULT_MODEL_ORDER = [...PREFERRED_MODEL_ORDER, ...COMPATIBILITY_MODEL_ORDER];
 const MAX_TOOL_ROUNDS = 8;
 
 function buildSystemPrompt() {
@@ -144,9 +177,42 @@ function buildSummaryFallback(operations) {
   return `Applied updates with ${toolNames}.`;
 }
 
+function buildAvailableModelMap(modelIds = DEFAULT_MODEL_ORDER) {
+  return modelIds.reduce((accumulator, modelId) => {
+    const metadata = MODEL_METADATA[modelId];
+
+    if (metadata) {
+      accumulator[modelId] = metadata;
+    }
+
+    return accumulator;
+  }, {});
+}
+
+function getKnownModelIds(data) {
+  return (data?.data || [])
+    .map((model) => model?.id)
+    .filter((id) => typeof id === 'string' && MODEL_METADATA[id]);
+}
+
+function normalizeModelListResponse(data) {
+  const knownModelIds = getKnownModelIds(data);
+
+  if (knownModelIds.length === 0) {
+    return [...DEFAULT_MODEL_ORDER];
+  }
+
+  const preferredIds = PREFERRED_MODEL_ORDER.filter((id) => knownModelIds.includes(id));
+  const compatibilityIds = COMPATIBILITY_MODEL_ORDER.filter((id) => knownModelIds.includes(id));
+  const additionalKnownIds = knownModelIds.filter((id) => !preferredIds.includes(id) && !compatibilityIds.includes(id));
+
+  return [...preferredIds, ...compatibilityIds, ...additionalKnownIds];
+}
+
 class AI {
   static _apiKey = null;
   static _totalUsage = { inputTokens: 0, outputTokens: 0, totalTokens: 0 };
+  static _availableModelIds = [...DEFAULT_MODEL_ORDER];
 
   static initWithKey(key) {
     AI._apiKey = key;
@@ -156,6 +222,7 @@ class AI {
   static clear() {
     AI._apiKey = null;
     AI._totalUsage = { inputTokens: 0, outputTokens: 0, totalTokens: 0 };
+    AI._availableModelIds = [...DEFAULT_MODEL_ORDER];
   }
 
   static get isInitialized() {
@@ -163,19 +230,59 @@ class AI {
   }
 
   static get availableModels() {
-    return MODELS;
+    return buildAvailableModelMap(AI._availableModelIds);
   }
 
   static getSelectedModel() {
-    return localStorage.getItem(STORAGE_KEYS.selectedModel) || 'gpt-4.1-mini';
+    const storedModel = localStorage.getItem(STORAGE_KEYS.selectedModel);
+
+    if (storedModel && AI.availableModels[storedModel]) {
+      return storedModel;
+    }
+
+    return DEFAULT_MODEL_ORDER.find((modelId) => AI.availableModels[modelId]) || 'gpt-4.1-mini';
   }
 
   static setSelectedModel(model) {
-    if (!MODELS[model]) {
+    if (!AI.availableModels[model]) {
       throw new Error(`Unsupported model: ${model}`);
     }
 
     localStorage.setItem(STORAGE_KEYS.selectedModel, model);
+  }
+
+  static async refreshAvailableModels(key = AI._apiKey) {
+    if (!key) {
+      AI._availableModelIds = [...DEFAULT_MODEL_ORDER];
+      return AI.availableModels;
+    }
+
+    try {
+      const response = await fetch('https://api.openai.com/v1/models', {
+        headers: {
+          Authorization: `Bearer ${key}`,
+        },
+      });
+
+      if (!response.ok) {
+        AI._availableModelIds = [...DEFAULT_MODEL_ORDER];
+        return AI.availableModels;
+      }
+
+      const data = await response.json();
+      AI._availableModelIds = normalizeModelListResponse(data);
+
+      const selectedModel = localStorage.getItem(STORAGE_KEYS.selectedModel);
+      if (selectedModel && !AI.availableModels[selectedModel]) {
+        localStorage.setItem(STORAGE_KEYS.selectedModel, AI.getSelectedModel());
+      }
+
+      return AI.availableModels;
+    } catch (error) {
+      console.error(error);
+      AI._availableModelIds = [...DEFAULT_MODEL_ORDER];
+      return AI.availableModels;
+    }
   }
 
   static async checkAPIKey(key) {
@@ -186,7 +293,13 @@ class AI {
         },
       });
 
-      return response.ok;
+      if (!response.ok) {
+        return false;
+      }
+
+      const data = await response.json();
+      AI._availableModelIds = normalizeModelListResponse(data);
+      return true;
     } catch (error) {
       console.error(error);
       return false;
@@ -198,7 +311,7 @@ class AI {
   }
 
   static get totalUsedTokensUSD() {
-    const pricing = MODELS[AI.getSelectedModel()] || MODELS['gpt-4.1-mini'];
+    const pricing = AI.availableModels[AI.getSelectedModel()] || MODEL_METADATA['gpt-4.1-mini'];
     const inputCost = (AI._totalUsage.inputTokens / 1_000_000) * pricing.inputCostPerMillion;
     const outputCost = (AI._totalUsage.outputTokens / 1_000_000) * pricing.outputCostPerMillion;
     return inputCost + outputCost;
@@ -213,24 +326,31 @@ class AI {
     const startingArtifacts = getLatestArtifacts(messages);
     const nextArtifacts = { ...startingArtifacts };
     const operations = [];
-    const input = buildResponsesInput(messages);
+    let previousResponseId = null;
+    let nextInput = buildResponsesInput(messages);
 
     try {
       for (let round = 0; round < MAX_TOOL_ROUNDS; round += 1) {
+        const requestBody = {
+          model,
+          temperature: 0.3,
+          store: false,
+          instructions: buildSystemPrompt(),
+          tools: ARTIFACT_TOOL_DEFINITIONS,
+          input: nextInput,
+        };
+
+        if (previousResponseId) {
+          requestBody.previous_response_id = previousResponseId;
+        }
+
         const response = await fetch('https://api.openai.com/v1/responses', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
             Authorization: `Bearer ${AI._apiKey}`,
           },
-          body: JSON.stringify({
-            model,
-            temperature: 0.3,
-            store: false,
-            instructions: buildSystemPrompt(),
-            tools: ARTIFACT_TOOL_DEFINITIONS,
-            input,
-          }),
+          body: JSON.stringify(requestBody),
         });
 
         const data = await response.json();
@@ -255,7 +375,7 @@ class AI {
         }
 
         updateUsage(data?.usage);
-        input.push(...(data?.output || []));
+        previousResponseId = data?.id || previousResponseId;
 
         const functionCalls = extractFunctionCalls(data);
 
@@ -272,15 +392,15 @@ class AI {
           );
         }
 
-        for (const functionCall of functionCalls) {
+        nextInput = functionCalls.map((functionCall) => {
           const result = applyArtifactToolCall(functionCall.name, functionCall.arguments, nextArtifacts);
 
           if (result.operation) {
             operations.push(result.operation);
           }
 
-          input.push(buildFunctionCallOutput(functionCall.call_id || functionCall.id, result.output));
-        }
+          return buildFunctionCallOutput(functionCall.call_id || functionCall.id, result.output);
+        });
       }
 
       return new ChatMessage('system', 'The AI editor exceeded the tool-call limit for this request. Try a smaller change.');
@@ -296,7 +416,8 @@ export {
   buildAssistantHistoryPayload,
   extractAssistantText,
   extractFunctionCalls,
-  MODELS,
+  normalizeModelListResponse,
+  MODEL_METADATA,
   STORAGE_KEYS,
 };
 export default AI;

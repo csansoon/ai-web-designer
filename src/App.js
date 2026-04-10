@@ -9,7 +9,7 @@ import Editor from './components/Editor';
 import Chat from './components/Chat';
 
 import ChatMessage from './components/ChatMessage';
-import AI, { MODELS, STORAGE_KEYS } from './model/AI';
+import AI, { STORAGE_KEYS } from './model/AI';
 
 const DEFAULT_HTML = `<main class="hero">
   <section>
@@ -66,12 +66,13 @@ function App() {
   const [loadingResponse, setLoadingResponse] = useState(false);
   const [usedTokens, setUsedTokens] = useState('0');
   const [moneySpent, setMoneySpent] = useState('0.0000');
+  const [availableModels, setAvailableModels] = useState(AI.availableModels);
   const [selectedModel, setSelectedModel] = useState(AI.getSelectedModel());
 
   const [isCheckingAPIKey, setIsCheckingAPIKey] = useState(false);
   const [showAPIKeyDialog, setShowAPIKeyDialog] = useState(!AI.isInitialized && !localStorage.getItem(STORAGE_KEYS.apiKey));
 
-  const modelDescription = useMemo(() => MODELS[selectedModel]?.description || '', [selectedModel]);
+  const modelDescription = useMemo(() => availableModels[selectedModel]?.description || '', [availableModels, selectedModel]);
 
   const checkAPIKeyValidity = useCallback(async (keyFromArgument) => {
     const key = keyFromArgument || localStorage.getItem(STORAGE_KEYS.apiKey);
@@ -86,9 +87,13 @@ function App() {
 
     if (isValid) {
       AI.initWithKey(key);
+      setAvailableModels(AI.availableModels);
+      setSelectedModel(AI.getSelectedModel());
       setShowAPIKeyDialog(false);
     } else {
       AI.clear();
+      setAvailableModels(AI.availableModels);
+      setSelectedModel(AI.getSelectedModel());
       localStorage.removeItem(STORAGE_KEYS.apiKey);
       setShowAPIKeyDialog(true);
     }
@@ -205,7 +210,7 @@ function App() {
         <div className="sidebar-panel">
           <div className="settings-panel">
             <SlSelect value={selectedModel} label="Model" onSlChange={handleModelChange} hoist>
-              {Object.entries(MODELS).map(([value, model]) => (
+              {Object.entries(availableModels).map(([value, model]) => (
                 <SlOption key={value} value={value}>{model.label}</SlOption>
               ))}
             </SlSelect>

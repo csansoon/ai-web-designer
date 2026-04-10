@@ -1,8 +1,10 @@
 import AI, {
+  MODEL_METADATA,
   buildAssistantHistoryPayload,
   buildResponsesInput,
   extractAssistantText,
   extractFunctionCalls,
+  normalizeModelListResponse,
 } from './AI';
 import ChatMessage from '../components/ChatMessage';
 import { applyArtifactToolCall } from './artifactTools';
@@ -99,6 +101,24 @@ describe('AI helpers', () => {
       reason: 'Swap in the updated layout',
     }));
   });
+
+  test('normalizeModelListResponse keeps explicit preferred models first and compatibility fallbacks later', () => {
+    expect(normalizeModelListResponse({
+      data: [
+        { id: 'gpt-5' },
+        { id: 'gpt-4.1' },
+        { id: 'gpt-5.4' },
+        { id: 'gpt-5.3-codex' },
+        { id: 'not-supported-here' },
+      ],
+    })).toEqual(['gpt-5.4', 'gpt-5.3-codex', 'gpt-4.1', 'gpt-5']);
+  });
+
+  test('normalizeModelListResponse falls back to the curated default order when no known models are returned', () => {
+    expect(normalizeModelListResponse({
+      data: [{ id: 'totally-unknown-model' }],
+    })).toEqual(['gpt-5.4', 'gpt-5.3-codex', 'gpt-5-mini', 'gpt-4.1', 'gpt-4.1-mini', 'gpt-4.1-nano', 'gpt-5']);
+  });
 });
 
 describe('AI tool loop', () => {
@@ -116,6 +136,7 @@ describe('AI tool loop', () => {
       .mockResolvedValueOnce({
         ok: true,
         json: async () => ({
+          id: 'resp_1',
           usage: { input_tokens: 120, output_tokens: 30, total_tokens: 150 },
           output: [
             {
@@ -144,6 +165,7 @@ describe('AI tool loop', () => {
       .mockResolvedValueOnce({
         ok: true,
         json: async () => ({
+          id: 'resp_2',
           usage: { input_tokens: 80, output_tokens: 20, total_tokens: 100 },
           output_text: 'Updated the hero markup and styling.',
           output: [
@@ -160,6 +182,25 @@ describe('AI tool loop', () => {
     ]);
 
     expect(fetchSpy).toHaveBeenCalledTimes(2);
+
+    const firstRequest = JSON.parse(fetchSpy.mock.calls[0][1].body);
+    const secondRequest = JSON.parse(fetchSpy.mock.calls[1][1].body);
+
+    expect(firstRequest.previous_response_id).toBeUndefined();
+    expect(secondRequest.previous_response_id).toBe('resp_1');
+    expect(secondRequest.input).toEqual([
+      {
+        type: 'function_call_output',
+        call_id: 'call_1',
+        output: JSON.stringify({ ok: true, target: 'html', size: '<main><h1>New hero</h1></main>'.length }),
+      },
+      {
+        type: 'function_call_output',
+        call_id: 'call_2',
+        output: JSON.stringify({ ok: true, target: 'css', size: 'body { color: red; }'.length }),
+      },
+    ]);
+
     expect(responseMessage.role).toBe('assistant');
     expect(responseMessage.message).toBe('Updated the hero markup and styling.');
     expect(responseMessage.html).toBe('<main><h1>New hero</h1></main>');
@@ -167,5 +208,18 @@ describe('AI tool loop', () => {
     expect(responseMessage.js).toBeUndefined();
     expect(responseMessage.operations).toHaveLength(2);
     expect(AI.totalUsedTokens).toBe(250);
+  });
+
+  test('checkAPIKey updates available models from the API response using the explicit preference order', async () => {
+    jest.spyOn(global, 'fetch').mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        data: [{ id: 'gpt-5' }, { id: 'gpt-5.3-codex' }, { id: 'gpt-4.1' }],
+      }),
+    });
+
+    await expect(AI.checkAPIKey('test-key')).resolves.toBe(true);
+    expect(Object.keys(AI.availableModels)).toEqual(['gpt-5.3-codex', 'gpt-4.1', 'gpt-5']);
+    expect(AI.availableModels['gpt-5.3-codex']).toEqual(MODEL_METADATA['gpt-5.3-codex']);
   });
 });

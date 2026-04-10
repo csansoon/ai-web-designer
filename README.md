@@ -9,7 +9,7 @@ Live demo: https://csansoon.github.io/ai-web-designer/
 - Replaced the old single-shot JSON schema flow with a tool-driven OpenAI Responses API loop.
 - Introduced explicit code-editing tools: `setHtml`, `setCss`, and `setJs`.
 - Kept the app frontend-only while making the AI editing flow more agentic and iterative.
-- Preserved model selection, API key management, and usage tracking from the previous branch.
+- Preserved model selection, API key management, and usage tracking from the previous branch, while preferring explicit modern model IDs when a key exposes them.
 - Improved error handling for invalid keys, rate limits, networking failures, and context-length issues.
 - Added tests for the new orchestration helpers and multi-step tool loop.
 
@@ -42,7 +42,9 @@ npm run build
 
 ## API key model
 
-This app currently sends requests directly from the browser to OpenAI using a user-provided API key stored in local storage. For safety:
+This app currently sends requests directly from the browser to OpenAI using a user-provided API key stored in local storage. The model picker uses a curated preferred list of explicit model IDs (for example `gpt-5.4` and `gpt-5.3-codex`) but only shows entries that the current key can actually access via `/v1/models`, with a generic `gpt-5` fallback retained for compatibility.
+
+For safety:
 
 - prefer a project-scoped key
 - set a spend limit
