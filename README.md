@@ -6,23 +6,23 @@ Live demo: https://csansoon.github.io/ai-web-designer/
 
 ## What's improved in this version
 
-- Upgraded the AI integration from the legacy OpenAI SDK flow to a modern structured-output chat integration.
-- Replaced the hardcoded `gpt-3.5-turbo` setup with selectable current models (`gpt-4.1-mini` and `gpt-4.1`).
-- Added stronger prompting and strict JSON schema responses so code updates are more reliable.
+- Replaced the old single-shot JSON schema flow with a tool-driven OpenAI Responses API loop.
+- Introduced explicit code-editing tools: `setHtml`, `setCss`, and `setJs`.
+- Kept the app frontend-only while making the AI editing flow more agentic and iterative.
+- Preserved model selection, API key management, and usage tracking from the previous branch.
 - Improved error handling for invalid keys, rate limits, networking failures, and context-length issues.
-- Added a better starter template, model picker, API key management UX, and more useful session usage tracking.
-- Replaced the broken starter test with app- and utility-level coverage.
+- Added tests for the new orchestration helpers and multi-step tool loop.
 
 ## How it works
 
-The assistant receives the latest user request together with the current HTML, CSS, and JavaScript state of the page. It returns structured JSON containing:
+The app sends the current conversation plus the latest HTML, CSS, and JavaScript artifacts to the OpenAI Responses API. Instead of returning one giant JSON blob, the model works through a local tool loop:
 
-- `text`: the assistant reply shown in chat
-- `html`: optional replacement body markup
-- `css`: optional replacement stylesheet
-- `js`: optional replacement JavaScript
+1. The model reads the current page state and the latest user request.
+2. It calls browser-defined tools such as `setHtml`, `setCss`, and `setJs` whenever it wants to update an artifact.
+3. The app applies each tool call locally, records the operation in chat history, and sends the tool results back to the model.
+4. The loop continues until the model stops calling tools and returns a final assistant summary for the user.
 
-Only the changed parts need to be returned, which keeps iteration fast and makes the app feel more like an AI design copilot than a single-shot generator.
+This architecture makes edits more explainable, better matches modern agent/tool workflows, and keeps the code generation logic understandable in a static client-side app.
 
 ## Local development
 
@@ -54,4 +54,5 @@ A future backend proxy could further improve security and observability, but thi
 
 - The app is optimized for a single static page rather than full multi-page apps.
 - Very large HTML/CSS/JS payloads can still hit model context limits.
+- Tool calls currently replace entire artifacts rather than patching subsections in place.
 - Browser-side API usage is convenient for demos, but a server-side proxy is safer for production deployments.
