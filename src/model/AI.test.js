@@ -102,15 +102,22 @@ describe('AI helpers', () => {
     }));
   });
 
-  test('normalizeModelListResponse keeps supported modern models in preferred order', () => {
+  test('normalizeModelListResponse keeps explicit preferred models first and compatibility fallbacks later', () => {
     expect(normalizeModelListResponse({
       data: [
-        { id: 'gpt-4.1' },
         { id: 'gpt-5' },
-        { id: 'gpt-5-mini' },
+        { id: 'gpt-4.1' },
+        { id: 'gpt-5.4' },
+        { id: 'gpt-5.3-codex' },
         { id: 'not-supported-here' },
       ],
-    })).toEqual(['gpt-5-mini', 'gpt-5', 'gpt-4.1']);
+    })).toEqual(['gpt-5.4', 'gpt-5.3-codex', 'gpt-4.1', 'gpt-5']);
+  });
+
+  test('normalizeModelListResponse falls back to the curated default order when no known models are returned', () => {
+    expect(normalizeModelListResponse({
+      data: [{ id: 'totally-unknown-model' }],
+    })).toEqual(['gpt-5.4', 'gpt-5.3-codex', 'gpt-5-mini', 'gpt-4.1', 'gpt-4.1-mini', 'gpt-4.1-nano', 'gpt-5']);
   });
 });
 
@@ -203,16 +210,16 @@ describe('AI tool loop', () => {
     expect(AI.totalUsedTokens).toBe(250);
   });
 
-  test('checkAPIKey updates available models from the API response', async () => {
+  test('checkAPIKey updates available models from the API response using the explicit preference order', async () => {
     jest.spyOn(global, 'fetch').mockResolvedValue({
       ok: true,
       json: async () => ({
-        data: [{ id: 'gpt-5' }, { id: 'gpt-4.1' }],
+        data: [{ id: 'gpt-5' }, { id: 'gpt-5.3-codex' }, { id: 'gpt-4.1' }],
       }),
     });
 
     await expect(AI.checkAPIKey('test-key')).resolves.toBe(true);
-    expect(Object.keys(AI.availableModels)).toEqual(['gpt-5', 'gpt-4.1']);
-    expect(AI.availableModels['gpt-5']).toEqual(MODEL_METADATA['gpt-5']);
+    expect(Object.keys(AI.availableModels)).toEqual(['gpt-5.3-codex', 'gpt-4.1', 'gpt-5']);
+    expect(AI.availableModels['gpt-5.3-codex']).toEqual(MODEL_METADATA['gpt-5.3-codex']);
   });
 });

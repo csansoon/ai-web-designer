@@ -7,39 +7,53 @@ const STORAGE_KEYS = {
 };
 
 const MODEL_METADATA = {
-  'gpt-4.1-mini': {
-    label: 'gpt-4.1-mini',
-    inputCostPerMillion: 0.4,
-    outputCostPerMillion: 1.6,
-    description: 'Fast default for iterative web design edits.',
+  'gpt-5.4': {
+    label: 'gpt-5.4',
+    inputCostPerMillion: 1.25,
+    outputCostPerMillion: 10,
+    description: 'Preferred flagship model when the key has access to the latest GPT-5 tier.',
   },
-  'gpt-4.1': {
-    label: 'gpt-4.1',
-    inputCostPerMillion: 2,
-    outputCostPerMillion: 8,
-    description: 'Higher quality for larger or trickier page rewrites.',
-  },
-  'gpt-4.1-nano': {
-    label: 'gpt-4.1-nano',
-    inputCostPerMillion: 0.1,
-    outputCostPerMillion: 0.4,
-    description: 'Lowest-cost 4.1 option for lightweight edits.',
+  'gpt-5.3-codex': {
+    label: 'gpt-5.3-codex',
+    inputCostPerMillion: 1.25,
+    outputCostPerMillion: 10,
+    description: 'Code-leaning GPT-5 option for explicit HTML, CSS, and JavaScript edits.',
   },
   'gpt-5-mini': {
     label: 'gpt-5-mini',
     inputCostPerMillion: 0.25,
     outputCostPerMillion: 2,
-    description: 'Balanced GPT-5 model for faster drafting and iteration.',
+    description: 'Balanced lower-cost GPT-5 choice for faster drafting and iteration.',
   },
   'gpt-5': {
     label: 'gpt-5',
     inputCostPerMillion: 1.25,
     outputCostPerMillion: 10,
-    description: 'Latest flagship GPT-5 model for higher-quality page generation.',
+    description: 'Generic GPT-5 fallback kept for compatibility when a key exposes it explicitly.',
+  },
+  'gpt-4.1': {
+    label: 'gpt-4.1',
+    inputCostPerMillion: 2,
+    outputCostPerMillion: 8,
+    description: 'Reliable higher-quality fallback for larger or trickier page rewrites.',
+  },
+  'gpt-4.1-mini': {
+    label: 'gpt-4.1-mini',
+    inputCostPerMillion: 0.4,
+    outputCostPerMillion: 1.6,
+    description: 'Fast default fallback for iterative web design edits.',
+  },
+  'gpt-4.1-nano': {
+    label: 'gpt-4.1-nano',
+    inputCostPerMillion: 0.1,
+    outputCostPerMillion: 0.4,
+    description: 'Lowest-cost fallback for lightweight edits and experiments.',
   },
 };
 
-const DEFAULT_MODEL_ORDER = ['gpt-5-mini', 'gpt-5', 'gpt-4.1-mini', 'gpt-4.1', 'gpt-4.1-nano'];
+const PREFERRED_MODEL_ORDER = ['gpt-5.4', 'gpt-5.3-codex', 'gpt-5-mini', 'gpt-4.1', 'gpt-4.1-mini', 'gpt-4.1-nano'];
+const COMPATIBILITY_MODEL_ORDER = ['gpt-5'];
+const DEFAULT_MODEL_ORDER = [...PREFERRED_MODEL_ORDER, ...COMPATIBILITY_MODEL_ORDER];
 const MAX_TOOL_ROUNDS = 8;
 
 function buildSystemPrompt() {
@@ -175,13 +189,24 @@ function buildAvailableModelMap(modelIds = DEFAULT_MODEL_ORDER) {
   }, {});
 }
 
-function normalizeModelListResponse(data) {
-  const ids = (data?.data || [])
+function getKnownModelIds(data) {
+  return (data?.data || [])
     .map((model) => model?.id)
     .filter((id) => typeof id === 'string' && MODEL_METADATA[id]);
+}
 
-  const orderedIds = DEFAULT_MODEL_ORDER.filter((id) => ids.includes(id));
-  return orderedIds.length > 0 ? orderedIds : DEFAULT_MODEL_ORDER;
+function normalizeModelListResponse(data) {
+  const knownModelIds = getKnownModelIds(data);
+
+  if (knownModelIds.length === 0) {
+    return [...DEFAULT_MODEL_ORDER];
+  }
+
+  const preferredIds = PREFERRED_MODEL_ORDER.filter((id) => knownModelIds.includes(id));
+  const compatibilityIds = COMPATIBILITY_MODEL_ORDER.filter((id) => knownModelIds.includes(id));
+  const additionalKnownIds = knownModelIds.filter((id) => !preferredIds.includes(id) && !compatibilityIds.includes(id));
+
+  return [...preferredIds, ...compatibilityIds, ...additionalKnownIds];
 }
 
 class AI {
